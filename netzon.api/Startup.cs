@@ -6,10 +6,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Netzon.Api.DAL;
+using AutoMapper;
+using Netzon.Api.Services;
 
 namespace Netzon.Api
 {
@@ -25,13 +29,27 @@ namespace Netzon.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Add framework services
+            services.AddDbContext<NetzonAPIContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            
+            services.AddApiVersioning();
+            
+            services.AddAutoMapper();
+            
             services.AddSwaggerDocument();
+
+            // configure DI
+            services.AddScoped<IUserService, UserService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            MigrateDatabase(app);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -48,6 +66,25 @@ namespace Netzon.Api
 
             app.UseHttpsRedirection();
             app.UseMvc();
+        }
+
+        private void MigrateDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices
+            .GetRequiredService<IServiceScopeFactory>()
+            .CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<NetzonAPIContext>())
+                {
+                    context.Database.Migrate();
+
+                    var logger = serviceScope.ServiceProvider.GetService<ILogger<NetzonAPIContextSeed>>();
+                    
+                    new NetzonAPIContextSeed()
+                        .SeedAsync(context, logger)
+                        .Wait();
+                }
+            }
         }
     }
 }

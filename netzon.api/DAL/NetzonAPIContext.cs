@@ -10,5 +10,6 @@ namespace Netzon.Api.DAL
         }
 
         public DbSet<User> Users {get; set;}
+        public DbSet<UserRole> UserRoles {get; set;}
     }
 }
