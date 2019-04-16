@@ -14,6 +14,9 @@ using Microsoft.Extensions.Options;
 using Netzon.Api.DAL;
 using AutoMapper;
 using Netzon.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Netzon.Api
 {
@@ -33,12 +36,27 @@ namespace Netzon.Api
             services.AddDbContext<NetzonAPIContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = Configuration["netzon.api:applicationUrl"],
+                            ValidAudience = Configuration["netzon.api:applicationUrl"],
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+                        };
+                    });
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
             services.AddApiVersioning();
-            
+
             services.AddAutoMapper();
-            
+
             services.AddSwaggerDocument();
 
             // configure DI
@@ -64,7 +82,8 @@ namespace Netzon.Api
             app.UseSwagger();
             app.UseSwaggerUi3();
 
-            app.UseHttpsRedirection();
+            app.UseAuthentication();
+
             app.UseMvc();
         }
 
@@ -79,7 +98,7 @@ namespace Netzon.Api
                     context.Database.Migrate();
 
                     var logger = serviceScope.ServiceProvider.GetService<ILogger<NetzonAPIContextSeed>>();
-                    
+
                     new NetzonAPIContextSeed()
                         .SeedAsync(context, logger)
                         .Wait();
