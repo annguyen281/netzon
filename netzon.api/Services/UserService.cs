@@ -14,8 +14,9 @@ namespace Netzon.Api.Services
         IEnumerable<User> GetAll();
         User GetById(int id);
         User Create(UserDTO user);
+        void Delete(int id);
+        User Update(UserDTO userDTO);
         bool IsRegistered(string userName);
-
     }
 
     public class UserService : IUserService
@@ -90,13 +91,44 @@ namespace Netzon.Api.Services
             return user;
         }
 
+        public User Update(UserDTO userDTO)
+        {
+            var user = _context.Users.Find(userDTO.Id);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            if (userDTO.Username != user.Username)
+            {
+                // username has changed so check if the new username is already taken
+                if (_context.Users.Any(x => x.Username == userDTO.Username))
+                    throw new Exception("Username " + userDTO.Username + " is already taken");
+            }
+
+            // update user properties
+            user.FirstName = userDTO.FirstName;
+            user.LastName = userDTO.LastName;
+            user.Username = userDTO.Username;
+
+            // update password if it was entered
+            if (!string.IsNullOrWhiteSpace(userDTO.Password))
+            {
+                user.PasswordSalt = _encryptionService.CreateSaltKey();
+                user.PasswordHash = _encryptionService.CreatePasswordHash(userDTO.Password, user.PasswordSalt);
+            }
+
+            _context.Users.Update(user);
+            _context.SaveChanges();
+
+            return user;
+        }
+
         public void Delete(int id)
         {
             var user = _context.Users.Find(id);
             if (user != null)
             {
                 user.Deleted = true;
-
                 _context.Users.Update(user);
 
                 _context.SaveChanges();

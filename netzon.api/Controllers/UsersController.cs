@@ -60,6 +60,27 @@ namespace Netzon.Api.Controllers
             return response;
         }
 
+        [AllowAnonymous]
+        [HttpPatch]
+        public ActionResult<UserDTO> Update([FromBody]UserDTO userDTO)
+        {
+            User user = null;
+            try 
+            {
+                user = _userService.Update(userDTO);
+
+                if (user == null)
+                    throw new Exception("Failed to update user");
+            } 
+            catch(Exception ex)
+            {
+                // return error message if there was an exception
+                return BadRequest(new { message = ex.Message });
+            }
+
+            return _mapper.Map<UserDTO>(user);
+        }
+
         [HttpGet("{id}")]
         public ActionResult<UserDTO> GetUser(int id)
         {
@@ -71,6 +92,14 @@ namespace Netzon.Api.Controllers
             }
 
             return _mapper.Map<UserDTO>(user);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            _userService.Delete(id);
+            
+            return Ok();
         }
 
         private string BuildToken(User user)
