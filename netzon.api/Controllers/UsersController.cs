@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Security.Claims;
 using Netzon.Api.Entities;
+using System.Threading.Tasks;
 
 namespace Netzon.Api.Controllers
 {
@@ -23,7 +24,7 @@ namespace Netzon.Api.Controllers
         private IMapper _mapper;
         private IConfiguration _config;
 
-        public UsersController(IUserService userService, 
+        public UsersController(IUserService userService,
             IMapper mapper,
             IConfiguration config)
         {
@@ -33,47 +34,64 @@ namespace Netzon.Api.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("authenticate")]
-        public IActionResult Authenticate([FromBody]UserDTO userDTO)
+        [HttpPost]
+        public IActionResult Register([FromBody]UserDTO userDTO)
         {
             IActionResult response = Unauthorized();
-            
-            var user = _userService.Authenticate(userDTO.Username, userDTO.Password);
+
+            if (string.IsNullOrEmpty(userDTO.Username))
+                return BadRequest(new { message = "Username is missing" });
+
+            if (_userService.IsRegistered(userDTO.Username))
+                return BadRequest(new { message = "Username \"" + userDTO.Username + "\" is already taken" });
+
+            if (string.IsNullOrEmpty(userDTO.FirstName) || string.IsNullOrEmpty(userDTO.LastName))
+                return BadRequest(new { message = "First name and last name are required" });
+
+            userDTO.Password = string.IsNullOrEmpty(userDTO.Password) ? "123456" : userDTO.Password;
+            var user = _userService.Create(userDTO);
 
             if (user == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
-
-            string tokenString = BuildToken(user);
+                return BadRequest(new { message = "User register not successfully" });
 
             // return basic user info (without password) and token to store client side
-            response = Ok(new {
-                Id = user.Id,
-                Username = user.Username,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Token = tokenString
-            });
+            response = Ok(userDTO);
 
             return response;
         }
 
+        [HttpGet("{id}")]
+        public ActionResult<UserDTO> GetUser(int id)
+        {
+            var user = _userService.GetById(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return _mapper.Map<UserDTO>(user);
+        }
+
         private string BuildToken(User user)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_config["Jwt:Issuer"]);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[] 
-                {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddMinutes(30),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            var claims = new[] {
+                new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
 
-            return tokenString;
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
+              _config["Jwt:Issuer"],
+              claims,
+              expires: DateTime.Now.AddMinutes(30),
+              signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

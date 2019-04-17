@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Netzon.Api.DAL;
+using Netzon.Api.DTOs;
 using Netzon.Api.Entities;
 
 namespace Netzon.Api.Services
@@ -11,7 +13,9 @@ namespace Netzon.Api.Services
         User Authenticate(string username, string password);
         IEnumerable<User> GetAll();
         User GetById(int id);
-        User Create(User user, string password);
+        User Create(UserDTO user);
+        bool IsRegistered(string userName);
+
     }
 
     public class UserService : IUserService
@@ -54,19 +58,33 @@ namespace Netzon.Api.Services
             return _context.Users.Find(id);
         }
 
-        public User Create(User user, string password)
+        public User Create(UserDTO userDTO)
         {
             // validation
-            if (string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(userDTO.Password))
                 throw new Exception("Password is required");
 
-            if (_context.Users.Any(x => x.Username == user.Username))
-                throw new Exception("Username \"" + user.Username + "\" is already taken");
+            if (_context.Users.Any(x => x.Username == userDTO.Username))
+                throw new Exception("Username \"" + userDTO.Username + "\" is already taken");
 
-            user.PasswordSalt = _encryptionService.CreateSaltKey();
-            user.PasswordHash = _encryptionService.CreatePasswordHash(password, user.PasswordSalt);
+            string passwordSalt = _encryptionService.CreateSaltKey();
+            string passwordHash = _encryptionService.CreatePasswordHash(userDTO.Password, passwordSalt);
+
+            User user = new User()
+            {
+                FirstName = userDTO.FirstName,
+                LastName = userDTO.LastName,
+                Username = userDTO.Username,
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
+                Deleted = false,
+                CreatedOn = DateTime.Now,
+                LastLoginDate = DateTime.MinValue,
+                UserRole = new UserRole() { Id = 2 } // 2 = Registers
+            };
 
             _context.Users.Add(user);
+
             _context.SaveChanges();
 
             return user;
@@ -83,6 +101,11 @@ namespace Netzon.Api.Services
 
                 _context.SaveChanges();
             }
+        }
+
+        public bool IsRegistered(string userName)
+        {
+            return _context.Users.Any(x => x.Username == userName);
         }
     }
 }

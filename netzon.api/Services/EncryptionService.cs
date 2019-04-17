@@ -13,8 +13,6 @@ namespace Netzon.Api.Services
 
         string CreatePasswordHash(string password, string saltkey);
 
-        string CreateHash(byte[] data);
-
         bool VerifyPasswordHash(string passsword, string hashedPassword, string passwordSalt);
     }
 
@@ -40,16 +38,14 @@ namespace Netzon.Api.Services
 
         public virtual string CreatePasswordHash(string password, string saltkey)
         {
-            return CreateHash(Encoding.UTF8.GetBytes(string.Concat(password, saltkey)));
-        }
+            byte[] data = Encoding.UTF8.GetBytes(string.Concat(password, saltkey));
 
-        public virtual string CreateHash(byte[] data)
-        {
             var algorithm = HashAlgorithm.Create("SHA512");
             if (algorithm == null)
                 throw new ArgumentException("Unrecognized hash name");
 
             var hashByteArray = algorithm.ComputeHash(data);
+
             return BitConverter.ToString(hashByteArray).Replace("-", "");
         }
 
@@ -58,13 +54,11 @@ namespace Netzon.Api.Services
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
 
-            using (var hmac = new System.Security.Cryptography.HMACSHA512(System.Text.Encoding.UTF8.GetBytes(passwordSalt)))
+            string computedHash = CreatePasswordHash(password, passwordSalt);
+
+            for (int i = 0; i < computedHash.Length; i++)
             {
-                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != passwordHash[i]) return false;
-                }
+                if (computedHash[i] != passwordHash[i]) return false;
             }
 
             return true;
