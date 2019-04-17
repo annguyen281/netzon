@@ -1,11 +1,15 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Netzon.Api.Entities;
+using Netzon.Api.Services;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace netzon.api.Migrations
 {
     public partial class InitialCreate : Migration
     {
+        private IEncryptionService _encryptionService = new EncryptionService();
+
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -53,6 +57,24 @@ namespace netzon.api.Migrations
                 name: "IX_Users_UserRoleId",
                 table: "Users",
                 column: "UserRoleId");
+
+            migrationBuilder.InsertData(
+                table: "UserRoles",
+                columns: new[] { "Id", "Name" },
+                values: new object[] { 1, "Administrators" });
+
+            migrationBuilder.InsertData(
+                table: "UserRoles",
+                columns: new[] { "Id", "Name" },
+                values: new object[] { 2, "Registers" });
+
+            string passwordSalt = _encryptionService.CreateSaltKey();
+            string passwordHash = _encryptionService.CreatePasswordHash("admin", passwordSalt);
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "FirstName", "LastName", "Username", "Email", "PasswordHash", "PasswordSalt", "Deleted", "CreatedOn", "LastLoginDate", "UserRoleId" },
+                values: new object[] { 1, "Administrator", "", "admin@netzon.com.se", "admin@netzon.com.se", passwordHash, passwordSalt, false, DateTime.Now, DateTime.MinValue, 1 });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

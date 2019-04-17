@@ -96,12 +96,6 @@ namespace Netzon.Api
                 using (var context = serviceScope.ServiceProvider.GetService<NetzonAPIContext>())
                 {
                     context.Database.Migrate();
-
-                    var logger = serviceScope.ServiceProvider.GetService<ILogger<NetzonAPIContextSeed>>();
-
-                    new NetzonAPIContextSeed()
-                        .SeedAsync(context, logger)
-                        .Wait();
                 }
             }
         }
