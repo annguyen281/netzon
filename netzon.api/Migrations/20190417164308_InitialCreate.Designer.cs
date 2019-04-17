@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace netzon.api.Migrations
 {
     [DbContext(typeof(NetzonAPIContext))]
-    [Migration("20190416183206_InitialCreate")]
+    [Migration("20190417164308_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,7 +18,7 @@ namespace netzon.api.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
-                .HasAnnotation("ProductVersion", "2.2.4-servicing-10062")
+                .HasAnnotation("ProductVersion", "2.2.1-servicing-10028")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Netzon.Api.Entities.User", b =>
@@ -42,7 +42,7 @@ namespace netzon.api.Migrations
 
                     b.Property<string>("PasswordSalt");
 
-                    b.Property<int?>("UserRoleId");
+                    b.Property<int>("UserRoleId");
 
                     b.Property<string>("Username");
 
@@ -69,7 +69,8 @@ namespace netzon.api.Migrations
                 {
                     b.HasOne("Netzon.Api.Entities.UserRole", "UserRole")
                         .WithMany("Users")
-                        .HasForeignKey("UserRoleId");
+                        .HasForeignKey("UserRoleId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

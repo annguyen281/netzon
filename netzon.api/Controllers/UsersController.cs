@@ -35,29 +35,24 @@ namespace Netzon.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost]
-        public IActionResult Register([FromBody]UserDTO userDTO)
+        public ActionResult<UserDTO> Register([FromBody]UserDTO userDTO)
         {
-            IActionResult response = Unauthorized();
-
             if (string.IsNullOrEmpty(userDTO.Username))
                 return BadRequest(new { message = "Username is missing" });
 
-            if (_userService.IsRegistered(userDTO.Username))
+            if (_userService.GetByUserName(userDTO.Username) != null)
                 return BadRequest(new { message = "Username \"" + userDTO.Username + "\" is already taken" });
 
             if (string.IsNullOrEmpty(userDTO.FirstName) || string.IsNullOrEmpty(userDTO.LastName))
                 return BadRequest(new { message = "First name and last name are required" });
 
             userDTO.Password = string.IsNullOrEmpty(userDTO.Password) ? "123456" : userDTO.Password;
-            var user = _userService.Create(userDTO);
+            var user = _userService.Create(userDTO, false);
 
             if (user == null)
-                return BadRequest(new { message = "User register not successfully" });
-
-            // return basic user info (without password) and token to store client side
-            response = Ok(userDTO);
-
-            return response;
+                return BadRequest(new { message = "Failed to create new user" });
+            
+            return _mapper.Map<UserDTO>(user);
         }
 
         [AllowAnonymous]
@@ -100,27 +95,6 @@ namespace Netzon.Api.Controllers
             _userService.Delete(id);
             
             return Ok();
-        }
-
-        private string BuildToken(User user)
-        {
-            var claims = new[] {
-                new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
-                new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-              _config["Jwt:Issuer"],
-              claims,
-              expires: DateTime.Now.AddMinutes(30),
-              signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

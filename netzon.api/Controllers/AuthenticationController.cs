@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Netzon.Api.DTOs;
 using Netzon.Api.Entities;
 using Netzon.Api.Services;
+using System.Linq;
 
 namespace Netzon.Api.Controllers
 {
@@ -58,13 +59,30 @@ namespace Netzon.Api.Controllers
             return response;
         }
 
+        [HttpPost("admin")]
+        public ActionResult<UserDTO> Admin([FromBody]UserDTO userDTO)
+        {
+            if (this.User.Claims.First(i => i.Type == "IsAdmin").Value != "1") // Not Admin
+                return BadRequest(new { message = "Only admin user should be able to make other admins" }); 
+
+            if (string.IsNullOrEmpty(userDTO.FirstName) || string.IsNullOrEmpty(userDTO.LastName) || string.IsNullOrEmpty(userDTO.Password))
+                return BadRequest(new { message = "First name, Last name and Password are required" });
+
+            var user = _userService.Create(userDTO, true);
+
+            if (user == null)
+                return BadRequest(new { message = "Failed to create new user" });
+            
+            return _mapper.Map<UserDTO>(user);
+        }
+
         private string BuildToken(User user)
         {
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim("IsAdmin", Convert.ToString(user.UserRoleId))
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

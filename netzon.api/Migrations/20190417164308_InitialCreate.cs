@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Netzon.Api.Entities;
 using Netzon.Api.Services;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -9,7 +8,6 @@ namespace netzon.api.Migrations
     public partial class InitialCreate : Migration
     {
         private IEncryptionService _encryptionService = new EncryptionService();
-
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -40,7 +38,7 @@ namespace netzon.api.Migrations
                     Deleted = table.Column<bool>(nullable: false),
                     CreatedOn = table.Column<DateTime>(nullable: false),
                     LastLoginDate = table.Column<DateTime>(nullable: false),
-                    UserRoleId = table.Column<int>(nullable: true)
+                    UserRoleId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,7 +48,7 @@ namespace netzon.api.Migrations
                         column: x => x.UserRoleId,
                         principalTable: "UserRoles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
