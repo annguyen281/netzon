@@ -16,6 +16,9 @@ using System.Collections.Generic;
 
 namespace Netzon.Api.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Authorize]
     [ApiController]
     [ApiVersion("1")]
@@ -35,6 +38,11 @@ namespace Netzon.Api.Controllers
             this._config = config;
         }
 
+        /// <summary>
+        /// Register to become member
+        /// </summary>
+        /// <param name="userDTO">User object that need to have username, first name and last name as mandatory. The default password is 123456</param>
+        /// <returns></returns>
         [AllowAnonymous]
         [HttpPost]
         public ActionResult<UserDTO> Register([FromBody]UserDTO userDTO)
@@ -57,6 +65,11 @@ namespace Netzon.Api.Controllers
             return _mapper.Map<UserDTO>(user);
         }
 
+        /// <summary>
+        /// Update profile of current logged-in user
+        /// </summary>
+        /// <param name="userDTO">User object. Cannot update username</param>
+        /// <returns></returns>
         [AllowAnonymous]
         [HttpPatch]
         public ActionResult<UserDTO> Update([FromBody]UserDTO userDTO)
@@ -81,6 +94,11 @@ namespace Netzon.Api.Controllers
             return _mapper.Map<UserDTO>(user);
         }
 
+        /// <summary>
+        /// Get project of logged-in user
+        /// </summary>
+        /// <param name="id">Id of user</param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         public ActionResult<UserDTO> GetUser(int id)
         {
@@ -97,6 +115,14 @@ namespace Netzon.Api.Controllers
             return _mapper.Map<UserDTO>(user);
         }
 
+        /// <summary>
+        /// Get list of users by admin only
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="isDeleted"></param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         [HttpGet]
         public ActionResult<List<UserDTO>> GetUsers(string query = "", bool isDeleted = false, int pageIndex = 0, int pageSize = 10)
         {
@@ -115,6 +141,11 @@ namespace Netzon.Api.Controllers
             return userDTOs;
         }
 
+        /// <summary>
+        /// Delete user itself or by admin
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {

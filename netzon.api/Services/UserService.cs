@@ -121,7 +121,6 @@ namespace Netzon.Api.Services
             // update user properties
             user.FirstName = userDTO.FirstName;
             user.LastName = userDTO.LastName;
-            user.Username = userDTO.Username;
             user.Email = userDTO.Email;
 
             // update password if it was entered

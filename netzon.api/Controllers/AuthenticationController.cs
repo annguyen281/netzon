@@ -11,9 +11,13 @@ using Netzon.Api.DTOs;
 using Netzon.Api.Entities;
 using Netzon.Api.Services;
 using System.Linq;
+using NSwag.Annotations;
 
 namespace Netzon.Api.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Authorize]
     [ApiController]
     [ApiVersion("1")]
@@ -33,8 +37,14 @@ namespace Netzon.Api.Controllers
             this._config = config;
         }
 
+        /// <summary>
+        /// Login by username and password
+        /// </summary>
+        /// <param name="userDTO">User object that need to have username and password as mandatory</param>
+        /// <returns>User object with valid token include</returns>
         [AllowAnonymous]
         [HttpPost("login")]
+        [SwaggerOperation("Login")]
         public IActionResult Login([FromBody]UserDTO userDTO)
         {
             IActionResult response = Unauthorized();
@@ -59,6 +69,11 @@ namespace Netzon.Api.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Add a new admin by admin only
+        /// </summary>
+        /// <param name="userDTO">User object that need to have username and password as mandatory</param>
+        /// <returns></returns>
         [HttpPost("admin")]
         public ActionResult<UserDTO> Admin([FromBody]UserDTO userDTO)
         {
@@ -73,7 +88,7 @@ namespace Netzon.Api.Controllers
                 var user = _userService.Create(userDTO, true);
 
                 if (user == null)
-                    return BadRequest(new { message = "Failed to create new user" });
+                    return BadRequest(new { message = "Failed to create new admin user" });
 
                 return _mapper.Map<UserDTO>(user);
             }
