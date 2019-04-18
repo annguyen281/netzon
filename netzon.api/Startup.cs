@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Netzon.Api.DAL;
 using AutoMapper;
 using Netzon.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using NSwag.AspNetCore;
 
 namespace Netzon.Api
 {
@@ -57,7 +51,27 @@ namespace Netzon.Api
 
             services.AddAutoMapper();
 
-            services.AddSwaggerDocument();
+            services.AddSwaggerDocument(config =>
+            {
+                config.PostProcess = document =>
+                {
+                    document.Info.Version = "v1";
+                    document.Info.Title = "Netzon API";
+                    document.Info.Description = "A test ASP.NET Core web API for Netzon";
+                    document.Info.TermsOfService = "None";
+                    document.Info.Contact = new NSwag.SwaggerContact
+                    {
+                        Name = "An NGUYEN",
+                        Email = "annguyen281@gmail.com",
+                        Url = "https://www.linkedin.com/in/enzonguyen/"
+                    };
+                    document.Info.License = new NSwag.SwaggerLicense
+                    {
+                        Name = "Use under LICX",
+                        Url = "https://example.com/license"
+                    };
+                };
+            });
 
             // configure DI
             services.AddScoped<IUserService, UserService>();
