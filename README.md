@@ -9,3 +9,6 @@ After clone to local machine, please run the following steps:
 
 Browse the swagger for this API by: http://localhost:8000/swagger/index.html
 
+Default username and password of Admin user:
+ - Username: admin@netzon.com.se
+ - Password: admin
