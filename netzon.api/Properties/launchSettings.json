@@ -20,8 +20,8 @@
     "netzon.api": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/books",
-      "applicationUrl": "http://localhost:5000",
+      "launchUrl": "/swagger",
+      "applicationUrl": "http://localhost:80",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
