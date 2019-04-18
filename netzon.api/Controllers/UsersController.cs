@@ -12,6 +12,7 @@ using System.Security.Claims;
 using Netzon.Api.Entities;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Netzon.Api.Controllers
 {
@@ -63,7 +64,7 @@ namespace Netzon.Api.Controllers
             User user = null;
             try 
             {
-                if (this.User.Claims.First(i => i.Type == "NameId").Value != userDTO.Id.ToString()) // Not logged-in user
+                if (this.User.Claims.First(i => i.Type.EndsWith("nameidentifier")).Value != userDTO.Id.ToString()) // Not logged-in user
                     return BadRequest(new { message = "Cannot update profile of another user" }); 
 
                 user = _userService.Update(userDTO);
@@ -83,7 +84,7 @@ namespace Netzon.Api.Controllers
         [HttpGet("{id}")]
         public ActionResult<UserDTO> GetUser(int id)
         {
-            if (this.User.Claims.First(i => i.Type == "NameId").Value != id.ToString()) // Not logged-in user
+            if (this.User.Claims.First(i => i.Type.EndsWith("nameidentifier")).Value != id.ToString()) // Not logged-in user
                 return BadRequest(new { message = "Cannot get profile of another user" }); 
 
             var user = _userService.GetById(id);
@@ -96,9 +97,31 @@ namespace Netzon.Api.Controllers
             return _mapper.Map<UserDTO>(user);
         }
 
+        [HttpGet]
+        public ActionResult<List<UserDTO>> GetUsers(string query = "", bool isDeleted = false, int pageIndex = 0, int pageSize = 10)
+        {
+            if (this.User.Claims.First(i => i.Type == "typ").Value != "1") // Not admin
+                return BadRequest(new { message = "Only admin can get users" }); 
+
+            var users = _userService.GetAll(query, isDeleted, pageIndex, pageSize);
+
+            if (users == null)
+                return NotFound();
+
+            List<UserDTO> userDTOs = new List<UserDTO>();
+            foreach(User user in users)
+                userDTOs.Add(_mapper.Map<UserDTO>(user));
+            
+            return userDTOs;
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
+            if (this.User.Claims.First(i => i.Type.EndsWith("nameidentifier")).Value != id.ToString() && // Not logged-in user
+                this.User.Claims.First(i => i.Type == "typ").Value != "1") // Not Admin 
+                return BadRequest(new { message = "You only can delete yourself or you are admin" }); 
+
             _userService.Delete(id);
             
             return Ok();

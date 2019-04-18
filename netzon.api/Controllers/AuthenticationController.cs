@@ -62,18 +62,25 @@ namespace Netzon.Api.Controllers
         [HttpPost("admin")]
         public ActionResult<UserDTO> Admin([FromBody]UserDTO userDTO)
         {
-            if (this.User.Claims.First(i => i.Type == "typ").Value != "1") // Not Admin
-                return BadRequest(new { message = "Only admin user should be able to make other admins" }); 
+            try
+            {
+                if (this.User.Claims.First(i => i.Type == "typ").Value != "1") // Not Admin
+                    return BadRequest(new { message = "Only admin user should be able to make other admins" });
 
-            if (string.IsNullOrEmpty(userDTO.Username) || string.IsNullOrEmpty(userDTO.Password))
-                return BadRequest(new { message = "Useranem and Password are required" });
+                if (string.IsNullOrEmpty(userDTO.Username) || string.IsNullOrEmpty(userDTO.Password))
+                    return BadRequest(new { message = "Useranem and Password are required" });
 
-            var user = _userService.Create(userDTO, true);
+                var user = _userService.Create(userDTO, true);
 
-            if (user == null)
-                return BadRequest(new { message = "Failed to create new user" });
-            
-            return _mapper.Map<UserDTO>(user);
+                if (user == null)
+                    return BadRequest(new { message = "Failed to create new user" });
+
+                return _mapper.Map<UserDTO>(user);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         private string BuildToken(User user)
@@ -82,6 +89,7 @@ namespace Netzon.Api.Controllers
                 new Claim(JwtRegisteredClaimNames.NameId, Convert.ToString(user.Id)),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Typ, Convert.ToString(user.UserRoleId))
             };

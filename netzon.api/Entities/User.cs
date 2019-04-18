@@ -5,8 +5,6 @@ namespace Netzon.Api.Entities
 {
     public class User : BaseEntity
     {
-        private UserRole _userRole;
-
         /// <summary>
         /// Ctor
         /// </summary>
@@ -24,10 +22,5 @@ namespace Netzon.Api.Entities
         public DateTime CreatedOn {get;set;}
         public DateTime LastLoginDate {get;set;}
         public int UserRoleId {get; set;}
-        public virtual UserRole UserRole
-        {
-            get { return _userRole ?? (_userRole = new UserRole()); }
-            protected set { _userRole = value; }
-        }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Netzon.Api.DAL;
 using Netzon.Api.DTOs;
 using Netzon.Api.Entities;
+using Netzon.Api.Helpers;
 
 namespace Netzon.Api.Services
 {
@@ -17,6 +18,7 @@ namespace Netzon.Api.Services
         void Delete(int id);
         User Update(UserDTO userDTO);
         User GetByUserName(string userName);
+        IPagedList<User> GetAll(string strQuery, bool isDeleted = false, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false);
     }
 
     public class UserService : IUserService
@@ -52,6 +54,17 @@ namespace Netzon.Api.Services
         public IEnumerable<User> GetAll()
         {
             return _context.Users.Where(u => u.Deleted == false);
+        }
+
+        public IPagedList<User> GetAll(string strQuery, bool isDeleted = false, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false)
+        {
+            string lowerQuery = string.IsNullOrWhiteSpace(strQuery) ? strQuery : strQuery.ToLower();
+            var query = _context.Users.Where(u => u.FirstName.ToLower().Contains(lowerQuery) || u.LastName.ToLower().Contains(lowerQuery))
+                                      .Where(u => u.Deleted == isDeleted);
+            
+            var users = new PagedList<User>(query, pageIndex, pageSize, getOnlyTotalCount);
+
+            return users;
         }
 
         public User GetById(int id)

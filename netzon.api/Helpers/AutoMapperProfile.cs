@@ -2,7 +2,7 @@ using AutoMapper;
 using Netzon.Api.DTOs;
 using Netzon.Api.Entities;
 
-namespace WebApi.Helpers
+namespace  Netzon.Api.Helpers
 {
     public class AutoMapperProfile : Profile
     {
