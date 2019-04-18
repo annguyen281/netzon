@@ -11,6 +11,7 @@ using System;
 using System.Security.Claims;
 using Netzon.Api.Entities;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Netzon.Api.Controllers
 {
@@ -62,6 +63,9 @@ namespace Netzon.Api.Controllers
             User user = null;
             try 
             {
+                if (this.User.Claims.First(i => i.Type == "NameId").Value != userDTO.Id.ToString()) // Not logged-in user
+                    return BadRequest(new { message = "Cannot update profile of another user" }); 
+
                 user = _userService.Update(userDTO);
 
                 if (user == null)
@@ -79,6 +83,9 @@ namespace Netzon.Api.Controllers
         [HttpGet("{id}")]
         public ActionResult<UserDTO> GetUser(int id)
         {
+            if (this.User.Claims.First(i => i.Type == "NameId").Value != id.ToString()) // Not logged-in user
+                return BadRequest(new { message = "Cannot get profile of another user" }); 
+
             var user = _userService.GetById(id);
 
             if (user == null)

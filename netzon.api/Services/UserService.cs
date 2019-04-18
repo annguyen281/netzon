@@ -81,7 +81,7 @@ namespace Netzon.Api.Services
                 Deleted = false,
                 CreatedOn = DateTime.Now,
                 LastLoginDate = DateTime.MinValue,
-                UserRole = new UserRole() { Id = isAdmin ? 1 : 2 }  // 1 = Admins, 2 = Registers
+                UserRoleId = isAdmin ? 1 : 2  // 1 = Admins, 2 = Registers
             };
 
             _context.Users.Add(user);
@@ -109,6 +109,7 @@ namespace Netzon.Api.Services
             user.FirstName = userDTO.FirstName;
             user.LastName = userDTO.LastName;
             user.Username = userDTO.Username;
+            user.Email = userDTO.Email;
 
             // update password if it was entered
             if (!string.IsNullOrWhiteSpace(userDTO.Password))

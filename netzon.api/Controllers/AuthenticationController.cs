@@ -62,11 +62,11 @@ namespace Netzon.Api.Controllers
         [HttpPost("admin")]
         public ActionResult<UserDTO> Admin([FromBody]UserDTO userDTO)
         {
-            if (this.User.Claims.First(i => i.Type == "IsAdmin").Value != "1") // Not Admin
+            if (this.User.Claims.First(i => i.Type == "typ").Value != "1") // Not Admin
                 return BadRequest(new { message = "Only admin user should be able to make other admins" }); 
 
-            if (string.IsNullOrEmpty(userDTO.FirstName) || string.IsNullOrEmpty(userDTO.LastName) || string.IsNullOrEmpty(userDTO.Password))
-                return BadRequest(new { message = "First name, Last name and Password are required" });
+            if (string.IsNullOrEmpty(userDTO.Username) || string.IsNullOrEmpty(userDTO.Password))
+                return BadRequest(new { message = "Useranem and Password are required" });
 
             var user = _userService.Create(userDTO, true);
 
@@ -79,10 +79,11 @@ namespace Netzon.Api.Controllers
         private string BuildToken(User user)
         {
             var claims = new[] {
+                new Claim(JwtRegisteredClaimNames.NameId, Convert.ToString(user.Id)),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("IsAdmin", Convert.ToString(user.UserRoleId))
+                new Claim(JwtRegisteredClaimNames.Typ, Convert.ToString(user.UserRoleId))
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

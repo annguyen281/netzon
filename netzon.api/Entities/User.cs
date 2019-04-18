@@ -27,7 +27,7 @@ namespace Netzon.Api.Entities
         public virtual UserRole UserRole
         {
             get { return _userRole ?? (_userRole = new UserRole()); }
-            set { _userRole = value; }
+            protected set { _userRole = value; }
         }
     }
 }
